@@ -1,0 +1,132 @@
+<div class="depenses-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Dépenses</h1>
+      <p class="page-subtitle">Suivi des dépenses par tâche</p>
+    </div>
+    <button class="btn btn-primary" (click)="showModal = true">+ Nouvelle Dépense</button>
+  </div>
+
+  <div class="glass-panel filter-bar animate-in">
+    <div class="filter-group">
+      <label>Projet</label>
+      <select class="form-control" [(ngModel)]="selectedProjetId" (change)="onProjetChange()">
+        <option [ngValue]="0">Tous les projets</option>
+        @for (p of projets; track p.id) {
+          <option [ngValue]="p.id">{{ p.nomProjet }}</option>
+        }
+      </select>
+    </div>
+    @if (taches.length > 0) {
+      <div class="filter-group">
+        <label>Tâche</label>
+        <select class="form-control" [(ngModel)]="selectedTacheId" (change)="loadDepenses()">
+          <option [ngValue]="0">Toutes les tâches</option>
+          @for (t of taches; track t.id) {
+            <option [ngValue]="t.id">{{ t.libelle }}</option>
+          }
+        </select>
+      </div>
+    }
+  </div>
+
+  <div class="glass-panel table-container animate-in" style="animation-delay: 0.1s">
+    @if (depenses.length > 0) {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Description</th>
+            <th>Montant (MAD)</th>
+            <th>Date</th>
+            <th>Tâche</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (d of depenses; track d.id) {
+            <tr>
+              <td>#{{ d.id }}</td>
+              <td style="font-weight:500;color:var(--text-primary)">{{ d.description || '—' }}</td>
+              <td><span class="amount-cell">{{ d.montant | number:'1.0-0' }}</span></td>
+              <td>{{ d.dateDepense || '—' }}</td>
+              <td>
+                @if (d.tache) {
+                  <span class="badge badge-blue">{{ d.tache.libelle }}</span>
+                } @else { — }
+              </td>
+              <td>
+                <div class="action-btns">
+                  <button class="btn btn-icon btn-ghost" (click)="editDepense(d)">✏️</button>
+                  <button class="btn btn-icon btn-ghost" (click)="confirmDelete(d)">🗑️</button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <div class="empty-state">
+        <div class="empty-state-icon">💳</div>
+        <div class="empty-state-text">Aucune dépense trouvée</div>
+      </div>
+    }
+  </div>
+
+  @if (showModal) {
+    <div class="modal-overlay" (click)="closeModal()">
+      <div class="modal-panel" (click)="$event.stopPropagation()">
+        <h2>{{ editing ? 'Modifier Dépense' : 'Nouvelle Dépense' }}</h2>
+        @if (!editing) {
+          <div class="form-group" style="margin-bottom:16px">
+            <label>Tâche</label>
+            <select class="form-control" [(ngModel)]="modalTacheId">
+              <option [ngValue]="0">-- Choisir une tâche --</option>
+              @for (t of taches; track t.id) {
+                <option [ngValue]="t.id">{{ t.libelle }}</option>
+              }
+            </select>
+          </div>
+        }
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Description</label>
+          <input type="text" class="form-control" [(ngModel)]="form.description" placeholder="Description de la dépense">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Montant (MAD)</label>
+            <input type="number" class="form-control" [(ngModel)]="form.montant" placeholder="1000">
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" class="form-control" [(ngModel)]="form.dateDepense">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" (click)="closeModal()">Annuler</button>
+          <button class="btn btn-primary" (click)="save()">{{ editing ? 'Modifier' : 'Créer' }}</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (depenseToDelete) {
+    <div class="modal-overlay" (click)="depenseToDelete = null">
+      <div class="modal-panel confirm-panel" (click)="$event.stopPropagation()">
+        <div class="confirm-icon">⚠️</div>
+        <h2>Supprimer cette Dépense</h2>
+        <p>"{{ depenseToDelete.description }}" ({{ depenseToDelete.montant | number:'1.0-0' }} MAD)</p>
+        <div class="modal-actions" style="justify-content:center">
+          <button class="btn btn-ghost" (click)="depenseToDelete = null">Annuler</button>
+          <button class="btn btn-danger" (click)="deleteDepense()">Supprimer</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (toast) {
+    <div class="toast-container">
+      <div class="toast" [class]="'toast-' + toast.type">{{ toast.message }}</div>
+    </div>
+  }
+</div>
