@@ -1,124 +1,236 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ProjetService } from '../../services/projet.service';
+import { DataCacheService } from '../../services/data-cache.service';
 import { Projet, ProjetDTO } from '../../models/models';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-projets',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <div class="projets-page">
-      <div class="page-header">
-        <div>
-          <h1 class="page-title">Projets</h1>
-          <p class="page-subtitle">Gerez vos projets et leurs ressources</p>
-        </div>
-        <button class="btn btn-primary" (click)="showCreateModal = true"><i class="bi bi-plus-lg"></i> Nouveau Projet</button>
-      </div>
+<div class="page">
 
-      <div class="search-bar glass-panel animate-in">
-        <i class="bi bi-search search-icon"></i>
-        <input type="text" class="search-input" placeholder="Rechercher un projet..."
-               [(ngModel)]="searchTerm" (input)="filterProjets()">
-      </div>
+  <!-- Header -->
+  <header class="page-header animate-in">
+    <div>
+      <div class="page-eyebrow"><span class="eyebrow-line"></span>Gestion</div>
+      <h1 class="page-title">Projets</h1>
+      <p class="page-subtitle">Gerez vos projets et leurs ressources</p>
+    </div>
+    <button class="btn btn-primary" (click)="showCreateModal = true">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+        <path d="M6.5 1.5V11.5M1.5 6.5H11.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Nouveau Projet
+    </button>
+  </header>
 
-      <div class="projects-grid">
-        @for (p of filteredProjets; track p.id; let i = $index) {
-          <div class="project-card glass-panel animate-in" [style.animation-delay]="(i * 0.05) + 's'">
-            <div class="project-card-header">
-              <div class="project-icon"><i class="bi bi-folder-fill"></i></div>
-              <div class="project-actions">
-                <button class="btn btn-icon btn-ghost" title="Cloner" (click)="cloneProjet(p.id)"><i class="bi bi-copy"></i></button>
-                <button class="btn btn-icon btn-ghost" title="Rapport" (click)="genererRapport(p.id)"><i class="bi bi-file-earmark-text"></i></button>
-                <button class="btn btn-icon btn-ghost" title="Supprimer" (click)="confirmDelete(p)"><i class="bi bi-trash"></i></button>
-              </div>
-            </div>
-            <h3 class="project-name">{{ p.nomProjet }}</h3>
-            <div class="project-meta">
-              <div class="meta-item">
-                <i class="bi bi-check2-square meta-icon"></i>
-                <span>{{ p.taches?.length || 0 }} taches</span>
-              </div>
-              <div class="meta-item">
-                <i class="bi bi-wallet2 meta-icon"></i>
-                <span>{{ p.budgets?.length || 0 }} budgets</span>
-              </div>
-            </div>
-            <a [routerLink]="['/projets', p.id]" class="project-link">Voir Details <i class="bi bi-arrow-right"></i></a>
+  <!-- Search -->
+  <div class="search-wrap glass-panel animate-in" style="animation-delay:0.05s">
+    <svg class="search-ico" width="15" height="15" viewBox="0 0 15 15" fill="none">
+      <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M10.5 10.5L13.5 13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <input class="search-input" type="text" placeholder="Rechercher un projet..."
+           [(ngModel)]="searchTerm" (input)="filterProjets()">
+    @if (searchTerm) {
+      <button class="search-clear" (click)="searchTerm=''; filterProjets()">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 2L10 10M10 2L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    }
+  </div>
+
+  <!-- Grid -->
+  <div class="projects-grid">
+    @for (p of filteredProjets; track p.id; let i = $index) {
+      <div class="project-card glass-panel animate-in" [style.animation-delay]="(i * 0.04) + 's'">
+        <!-- Top accent line -->
+        <div class="card-accent" [style.background]="cardColors[i % cardColors.length]"></div>
+
+        <div class="card-header">
+          <div class="card-avatar" [style.background]="cardColors[i % cardColors.length]">
+            {{ p.nomProjet.charAt(0).toUpperCase() }}
           </div>
-        }
-      </div>
-
-      @if (filteredProjets.length === 0) {
-        <div class="glass-panel empty-state animate-in">
-          <div class="empty-state-icon"><i class="bi bi-folder" style="font-size:3rem;opacity:0.3"></i></div>
-          <div class="empty-state-text">{{ searchTerm ? 'Aucun projet trouve' : 'Aucun projet. Creez votre premier projet!' }}</div>
-          @if (!searchTerm) {
-            <button class="btn btn-primary" (click)="showCreateModal = true"><i class="bi bi-plus-lg"></i> Nouveau Projet</button>
-          }
-        </div>
-      }
-
-      @if (showCreateModal) {
-        <div class="modal-overlay" (click)="showCreateModal = false">
-          <div class="modal-panel" (click)="$event.stopPropagation()">
-            <h2>Nouveau Projet</h2>
-            <div class="form-group">
-              <label>Nom du Projet</label>
-              <input type="text" class="form-control" placeholder="Entrez le nom du projet..." [(ngModel)]="newProjetName">
-            </div>
-            <div class="modal-actions">
-              <button class="btn btn-ghost" (click)="showCreateModal = false">Annuler</button>
-              <button class="btn btn-primary" (click)="createProjet()" [disabled]="!newProjetName.trim()">Creer</button>
-            </div>
-          </div>
-        </div>
-      }
-
-      @if (projetToDelete) {
-        <div class="modal-overlay" (click)="projetToDelete = null">
-          <div class="modal-panel confirm-panel" (click)="$event.stopPropagation()">
-            <div class="confirm-icon"><i class="bi bi-exclamation-triangle" style="font-size:3rem;color:var(--accent-amber)"></i></div>
-            <h2>Confirmer la Suppression</h2>
-            <p>Voulez-vous vraiment supprimer le projet "{{ projetToDelete.nomProjet }}" ?</p>
-            <div class="modal-actions" style="justify-content: center">
-              <button class="btn btn-ghost" (click)="projetToDelete = null">Annuler</button>
-              <button class="btn btn-danger" (click)="deleteProjet()">Supprimer</button>
-            </div>
+          <div class="card-actions">
+            <button class="btn btn-icon btn-ghost" title="Cloner" (click)="cloneProjet(p.id)">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+                <path d="M2 10V3C2 2.4 2.4 2 3 2H10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <button class="btn btn-icon btn-ghost" title="Rapport" (click)="genererRapport(p.id)">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M3 2H9L12 5V12C12 12.6 11.6 13 11 13H3C2.4 13 2 12.6 2 12V3C2 2.4 2.4 2 3 2Z" stroke="currentColor" stroke-width="1.3"/>
+                <path d="M9 2V5H12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                <path d="M5 8H9M5 10H7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <button class="btn btn-icon btn-ghost danger-hover" title="Supprimer" (click)="confirmDelete(p)">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M2 4H12M5 4V3H9V4M5.5 6.5V10.5M8.5 6.5V10.5M3 4L3.5 11C3.5 11.6 3.9 12 4.5 12H9.5C10.1 12 10.5 11.6 10.5 11L11 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
           </div>
         </div>
-      }
 
-      @if (toast) {
-        <div class="toast-container">
-          <div class="toast" [class]="'toast-' + toast.type">{{ toast.message }}</div>
+        <h3 class="card-name">{{ p.nomProjet }}</h3>
+        <div class="card-id">Projet #{{ p.id }}</div>
+
+        <div class="card-meta">
+          <div class="meta-pill">
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+              <rect x="1" y="1" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.2" fill="none"/>
+              <path d="M3.5 5.5L5 7L7.5 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            {{ p.taches?.length || 0 }} taches
+          </div>
+          <div class="meta-pill">
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+              <rect x="1" y="3" width="9" height="7" rx="1.5" fill="currentColor" opacity="0.7"/>
+              <path d="M1 5H10" stroke="rgba(255,255,255,0.4)" stroke-width="0.8"/>
+            </svg>
+            {{ p.budgets?.length || 0 }} budgets
+          </div>
         </div>
+
+        <a [routerLink]="['/projets', p.id]" class="card-link">
+          Voir Details
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M2 6H10M7 3L10 6L7 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      </div>
+    }
+  </div>
+
+  <!-- Empty state -->
+  @if (filteredProjets.length === 0) {
+    <div class="glass-panel empty-state animate-in">
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none" style="opacity:0.15;margin-bottom:14px">
+        <path d="M6 18C6 15.8 7.8 14 10 14H22L26 18H42C44.2 18 46 19.8 46 22V40C46 42.2 44.2 44 42 44H10C7.8 44 6 42.2 6 40V18Z" stroke="white" stroke-width="2"/>
+      </svg>
+      <div class="empty-state-text">{{ searchTerm ? 'Aucun projet trouve' : 'Aucun projet. Creez le premier.' }}</div>
+      @if (!searchTerm) {
+        <button class="btn btn-primary" (click)="showCreateModal = true">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M6 2V10M2 6H10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          Nouveau Projet
+        </button>
       }
     </div>
+  }
+
+  <!-- Create modal -->
+  @if (showCreateModal) {
+    <div class="modal-overlay" (click)="showCreateModal = false">
+      <div class="modal-panel" (click)="$event.stopPropagation()">
+        <div class="modal-icon azure">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M3 7C3 5.9 3.9 5 5 5H9L11 7H17C18.1 7 19 7.9 19 9V16C19 17.1 18.1 18 17 18H5C3.9 18 3 17.1 3 16V7Z" fill="currentColor" opacity="0.8"/>
+          </svg>
+        </div>
+        <h2>Nouveau Projet</h2>
+        <div class="form-group">
+          <label>Nom du Projet</label>
+          <input type="text" class="form-control" placeholder="Ex: Refonte Infrastructure..."
+                 [(ngModel)]="newProjetName" (keyup.enter)="createProjet()">
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" (click)="showCreateModal = false">Annuler</button>
+          <button class="btn btn-primary" (click)="createProjet()" [disabled]="!newProjetName.trim()">Creer</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Delete confirm -->
+  @if (projetToDelete) {
+    <div class="modal-overlay" (click)="projetToDelete = null">
+      <div class="modal-panel confirm-panel" (click)="$event.stopPropagation()">
+        <div class="modal-icon rose">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 3L18 17H2L10 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+            <path d="M10 9V12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <circle cx="10" cy="14.5" r="0.8" fill="currentColor"/>
+          </svg>
+        </div>
+        <h2>Confirmer la Suppression</h2>
+        <p>Le projet <strong>"{{ projetToDelete.nomProjet }}"</strong> sera supprime definitivement.</p>
+        <div class="modal-actions" style="justify-content:center">
+          <button class="btn btn-ghost" (click)="projetToDelete = null">Annuler</button>
+          <button class="btn btn-danger" (click)="deleteProjet()">Supprimer</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (toast) {
+    <div class="toast-container">
+      <div class="toast" [class]="'toast-' + toast.type">{{ toast.message }}</div>
+    </div>
+  }
+</div>
   `,
   styles: [`
-    .search-bar { display: flex; align-items: center; gap: 12px; padding: 12px 18px; margin-bottom: 24px; }
-    .search-icon { font-size: 1rem; opacity: 0.5; }
-    .search-input { flex: 1; background: none; border: none; color: var(--text-primary); font-size: 0.9rem; }
-    .search-input::placeholder { color: var(--text-muted); }
-    .projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-bottom: 20px; }
-    .project-card { padding: 24px; transition: all var(--transition-base); display: flex; flex-direction: column; }
-    .project-card:hover { transform: translateY(-3px); border-color: rgba(59,130,246,0.2); box-shadow: 0 8px 30px rgba(59,130,246,0.08); }
-    .project-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-    .project-icon { width: 44px; height: 44px; border-radius: var(--radius-md); background: rgba(59,130,246,0.1); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #60a5fa; }
-    .project-actions { display: flex; gap: 4px; }
-    .project-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 12px; }
-    .project-meta { display: flex; gap: 16px; margin-bottom: 16px; }
-    .meta-item { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-muted); }
-    .meta-icon { font-size: 0.9rem; }
-    .project-link { margin-top: auto; font-size: 0.85rem; font-weight: 500; color: var(--accent-blue); transition: color var(--transition-fast); }
-    .project-link:hover { color: #60a5fa; }
+    .page { animation: fadeIn 0.3s ease; }
+
+    .page-eyebrow { display:flex; align-items:center; gap:8px; font-size:0.68rem; font-weight:700; color:var(--ink-4); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:5px; }
+    .eyebrow-line { display:block; width:20px; height:2px; background:var(--g-aurora); border-radius:2px; }
+
+    /* Search */
+    .search-wrap { display:flex; align-items:center; gap:10px; padding:11px 16px; margin-bottom:24px; }
+    .search-ico { color:var(--ink-4); flex-shrink:0; }
+    .search-input { flex:1; background:none; border:none; color:var(--ink-1); font-size:0.88rem; font-family:inherit; }
+    .search-input::placeholder { color:var(--ink-4); }
+    .search-clear { color:var(--ink-4); display:flex; align-items:center; transition:color var(--dur-fast); }
+    .search-clear:hover { color:var(--ink-2); }
+
+    /* Grid */
+    .projects-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px,1fr)); gap:18px; margin-bottom:20px; }
+
+    /* Card */
+    .project-card { padding:22px; display:flex; flex-direction:column; position:relative; transition:all var(--dur-slow) var(--ease-out-expo); overflow:hidden; }
+    .project-card:hover { transform:translateY(-4px); border-color:var(--glass-4); box-shadow:var(--shadow-lg); }
+
+    .card-accent { position:absolute; top:0; left:0; right:0; height:2px; }
+
+    .card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; }
+
+    .card-avatar { width:42px; height:42px; border-radius:var(--r-md); display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk',sans-serif; font-size:1.1rem; font-weight:800; color:white; flex-shrink:0; }
+
+    .card-actions { display:flex; gap:3px; }
+
+    .danger-hover:hover { color:var(--a-rose); border-color:rgba(244,63,94,0.3); }
+
+    .card-name { font-family:'Space Grotesk',sans-serif; font-size:1.05rem; font-weight:700; color:var(--ink-0); margin-bottom:3px; letter-spacing:-0.01em; }
+    .card-id { font-size:0.7rem; color:var(--ink-4); font-weight:500; margin-bottom:14px; }
+
+    .card-meta { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+    .meta-pill { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:var(--r-full); background:var(--glass-2); border:1px solid var(--glass-3); font-size:0.72rem; color:var(--ink-3); font-weight:500; }
+
+    .card-link { margin-top:auto; display:inline-flex; align-items:center; gap:6px; font-size:0.8rem; font-weight:600; color:var(--a-azure); transition:gap var(--dur-base) var(--ease-out-expo); }
+    .card-link:hover { gap:10px; }
+
+    /* Modal icon */
+    .modal-icon { width:44px; height:44px; border-radius:var(--r-md); display:flex; align-items:center; justify-content:center; margin-bottom:16px; }
+    .modal-icon.azure { background:rgba(79,143,255,0.12); color:var(--a-azure); }
+    .modal-icon.rose  { background:rgba(244,63,94,0.12);  color:var(--a-rose); }
+
+    .confirm-panel p { color:var(--ink-3); font-size:0.88rem; margin-bottom:0; }
+    .confirm-panel strong { color:var(--ink-1); }
+
+    /* Card color palette */
+    :host { --c0: linear-gradient(135deg,#4f8fff,#2563eb); }
   `]
 })
-export class ProjetsComponent implements OnInit {
+export class ProjetsComponent implements OnInit, OnDestroy {
   projets: Projet[] = [];
   filteredProjets: Projet[] = [];
   searchTerm = '';
@@ -126,41 +238,62 @@ export class ProjetsComponent implements OnInit {
   newProjetName = '';
   projetToDelete: Projet | null = null;
   toast: { message: string; type: string } | null = null;
+  private sub!: Subscription;
 
-  constructor(private projetService: ProjetService) {}
-  ngOnInit() { this.loadProjets(); }
+  cardColors = [
+    'linear-gradient(135deg,#4f8fff,#2563eb)',
+    'linear-gradient(135deg,#8b5cf6,#6d28d9)',
+    'linear-gradient(135deg,#10b981,#059669)',
+    'linear-gradient(135deg,#f59e0b,#d97706)',
+    'linear-gradient(135deg,#f43f5e,#e11d48)',
+    'linear-gradient(135deg,#d946ef,#a21caf)',
+  ];
 
-  loadProjets() {
-    this.projetService.getAll().subscribe({
-      next: (data) => { this.projets = data; this.filterProjets(); },
-      error: () => this.showToast('Erreur de chargement des projets', 'error')
+  constructor(private projetService: ProjetService, private cache: DataCacheService) {}
+
+  ngOnInit() {
+    // Subscribe to cache — instant if already loaded
+    this.sub = this.cache.projets$.subscribe(data => {
+      this.projets = data;
+      this.filterProjets();
     });
+    this.cache.init();
   }
 
+  ngOnDestroy() { if (this.sub) this.sub.unsubscribe(); }
+
+  loadProjets() { this.cache.refreshProjets(); }
+
   filterProjets() {
-    const term = this.searchTerm.toLowerCase();
-    this.filteredProjets = this.projets.filter(p => p.nomProjet.toLowerCase().includes(term));
+    const t = this.searchTerm.toLowerCase();
+    this.filteredProjets = this.projets.filter(p => p.nomProjet.toLowerCase().includes(t));
   }
 
   createProjet() {
     if (!this.newProjetName?.trim()) return;
     this.projetService.create({ nomProjet: this.newProjetName.trim() }).subscribe({
-      next: () => { this.showCreateModal = false; this.newProjetName = ''; this.loadProjets(); this.showToast('Projet cree avec succes!', 'success'); },
-      error: () => this.showToast('Erreur lors de la creation', 'error')
+      next: (created: Projet) => {
+        this.showCreateModal = false;
+        this.newProjetName = '';
+        // Optimistically add to cache
+        this.cache.addProjet(created);
+        this.showToast('Projet cree', 'success');
+      },
+      error: () => this.showToast('Erreur de creation', 'error')
     });
   }
 
   cloneProjet(id: number) {
     this.projetService.cloner(id).subscribe({
-      next: () => { this.loadProjets(); this.showToast('Projet clone avec succes!', 'success'); },
-      error: () => this.showToast('Erreur lors du clonage', 'error')
+      next: () => { this.cache.refreshProjets(); this.showToast('Projet clone', 'success'); },
+      error: () => this.showToast('Erreur de clonage', 'error')
     });
   }
 
   genererRapport(id: number) {
     this.projetService.genererRapport(id).subscribe({
-      next: (msg) => this.showToast(msg || 'Rapport genere!', 'success'),
-      error: () => this.showToast('Erreur lors de la generation du rapport', 'error')
+      next: (msg) => this.showToast(msg || 'Rapport genere', 'success'),
+      error: () => this.showToast('Erreur de rapport', 'error')
     });
   }
 
@@ -169,8 +302,8 @@ export class ProjetsComponent implements OnInit {
   deleteProjet() {
     if (!this.projetToDelete) return;
     this.projetService.delete(this.projetToDelete.id).subscribe({
-      next: () => { this.projetToDelete = null; this.loadProjets(); this.showToast('Projet supprime', 'success'); },
-      error: () => this.showToast('Erreur lors de la suppression', 'error')
+      next: () => { this.projetToDelete = null; this.cache.refreshProjets(); this.showToast('Projet supprime', 'success'); },
+      error: () => this.showToast('Erreur de suppression', 'error')
     });
   }
 

@@ -22,7 +22,7 @@ public class BudgetService implements IBudgetService {
 	@Autowired private BudgetRepository budgetRepository;
     @Autowired private ProjetRepository projetRepository;
     
-    private static final double LIMITE_BUDGET = 1000000.0;
+    private static final double LIMITE_BUDGET = 100000000.0;
 
     public  Budget createBudget(BudgetDTO dto, Long projetId) {
         Projet p = projetRepository.findById(projetId).orElseThrow();

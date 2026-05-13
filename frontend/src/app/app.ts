@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { SidebarComponent } from './components/layout/sidebar.component';
+import { DataCacheService } from './services/data-cache.service';
 
 @Component({
   selector: 'app-root',
@@ -18,15 +19,16 @@ import { SidebarComponent } from './components/layout/sidebar.component';
     .app-layout {
       display: flex;
       min-height: 100vh;
-      background: var(--bg-primary);
-      background-image: var(--gradient-mesh);
+      background: var(--void);
+      background-image: var(--mesh);
     }
 
     .main-content {
       flex: 1;
-      margin-left: var(--sidebar-width);
+      margin-left: var(--sidebar-w);
       padding: 32px 36px;
       min-height: 100vh;
+      position: relative;
     }
 
     @media (max-width: 768px) {
@@ -37,4 +39,11 @@ import { SidebarComponent } from './components/layout/sidebar.component';
     }
   `]
 })
-export class AppComponent {}
+export class AppComponent implements OnInit {
+  constructor(private cache: DataCacheService) {}
+
+  ngOnInit() {
+    // Pre-fetch all data once at startup — every component gets it instantly
+    this.cache.init();
+  }
+}

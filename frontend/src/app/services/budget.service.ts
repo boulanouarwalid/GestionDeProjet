@@ -26,6 +26,6 @@ export class BudgetService {
   }
 
   getTauxAvancement(projetId: number): Observable<number> {
-    return this.http.post<number>(`${this.api}/avancement/${projetId}`, {});
+    return this.http.get<number>(`${this.api}/avancement/${projetId}`);
   }
 }

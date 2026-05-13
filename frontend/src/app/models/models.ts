@@ -25,7 +25,8 @@ export interface BudgetDTO {
 export interface Tache {
   id: number;
   libelle: string;
-  date_echeance: string;
+  // Fix #4: backend serializes as dateEcheance (camelCase), not date_echeance.
+  dateEcheance: string;
   status: string;
   type: string;
   projet?: Projet;
