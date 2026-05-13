@@ -4,28 +4,26 @@ import com.controleproject.dto.BudgetDTO;
 import com.controleproject.entity.Budget;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @Service
+@Primary // Tells Spring to choose this decorated service over the base one
 public class BudgetAlerteDecorator implements IBudgetService {
 
     @Autowired
-    @Qualifier("baseBudgetService") // Il injecte le vrai service
+    @Qualifier("baseBudgetService")
     private IBudgetService originalService;
 
     @Override
     public Budget createBudget(BudgetDTO dto, Long projetId) {
-        // 1. Appel du service original
         Budget b = originalService.createBudget(dto, projetId);
 
-        // 2. Ajout de la fonctionnalité "Décoration" (Alerte)
+        // Decorator logic additions
         if (b.getMontantPrevu() > 500000) {
-            System.out.println(" ALERTE DECORATOR : Un budget très important vient d'être créé !");
-            // Ici tu pourrais appeler un service SMS ou Email
+            System.out.println("⚠️ ALERTE DECORATOR : Un budget très important vient d'être créé !");
         }
-
         return b;
     }
 
@@ -33,5 +31,25 @@ public class BudgetAlerteDecorator implements IBudgetService {
     public List<Budget> getBudgetsByProjet(Long projetId) {
         return originalService.getBudgetsByProjet(projetId);
     }
-}
 
+    @Override
+    public Budget modifyBudget(BudgetDTO dto, Long budgetId, Long projetId) {
+        Budget b = originalService.modifyBudget(dto, budgetId, projetId);
+
+        // You can decorate the modification workflow too
+        if (b.getMontantPrevu() > 500000) {
+            System.out.println("⚠️ ALERTE DECORATOR : Un budget a été modifié vers un montant critique !");
+        }
+        return b;
+    }
+
+    @Override
+    public void deleteBudget(Long budgetId) {
+        originalService.deleteBudget(budgetId);
+    }
+
+    @Override
+    public double getTauxAvancement(Long budgetId) {
+        return originalService.getTauxAvancement(budgetId);
+    }
+}

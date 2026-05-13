@@ -2,6 +2,7 @@ package com.controleproject.controller;
 
 import java.util.List;
 
+import com.controleproject.service.IBudgetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +19,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 @RequestMapping("/api/budgets")
 @Tag(name = "Budgets", description = "Budget management API")
 public class BudgetController {
-    @Autowired private BudgetService budgetService;
+    @Autowired
+    private IBudgetService budgetService;
 
     @PostMapping("/{projetId}")
     @Operation(summary = "Create a new budget", description = "Creates a new budget for a specific project")

@@ -2,6 +2,7 @@ package com.controleproject.controller;
 
 import java.util.List;
 
+import com.controleproject.service.IDepenseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 @RequestMapping("/api/depenses")
 @Tag(name = "Depenses", description = "Expense management API")
 public class DepenseController {
-	@Autowired private DepenseService depenseservice;
+	@Autowired private IDepenseService depenseservice;
 	
 	@GetMapping
 	@Operation(summary = "Get all expenses", description = "Retrieves a list of all expenses")

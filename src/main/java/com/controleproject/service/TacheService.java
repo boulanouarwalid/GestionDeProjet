@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.controleproject.event.DepenseCreatedEvent;
+import com.controleproject.observer.Observer;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,7 @@ import com.controleproject.repository.*;
 
 @Service
 @Transactional
-public class TacheService {
+public class TacheService implements Observer {
     @Autowired private TacheRepository tacheRepository;
     @Autowired private ProjetRepository projetRepository;
     @Autowired private BudgetRepository budgetRepository;
@@ -101,5 +102,24 @@ public class TacheService {
     }
     public void deleteTache(Long TacheId) {
     	tacheRepository.deleteById(TacheId);
+    }
+    @Override
+    public void update(double montant, Long tacheId) {
+        System.out.println("Observer notification received: Tache ID " + tacheId + " incurred " + montant + " MAD expense.");
+
+        Tache tache = tacheRepository.findById(tacheId)
+                .orElseThrow(() -> new RuntimeException("Tache introuvable lors de la mise à jour du budget"));
+
+        Long projetId = tache.getProjet().getId();
+
+        Budget budget = budgetRepository.findByProjetId(projetId).stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Aucun budget configuré pour ce projet"));
+
+        double currentConsomme = budget.getMontantConsomme() != null ? budget.getMontantConsomme() : 0.0;
+        budget.setMontantConsomme(currentConsomme + montant);
+
+        budgetRepository.save(budget);
+        System.out.println(" Project Budget updated successfully inside classical Observer.");
     }
 }
