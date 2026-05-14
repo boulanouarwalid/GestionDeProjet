@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Projet, ProjetDTO, InitProjetRequest } from '../models/models';
 
@@ -29,8 +29,9 @@ export class ProjetService {
     return this.http.post<Projet>(`${this.api}/${id}/cloner`, {});
   }
 
-  genererRapport(id: number): Observable<string> {
-    return this.http.post(`${this.api}/${id}/generer-rapport`, {}, { responseType: 'text' });
+  genererRapport(id: number, format: string = 'rapportExcelService'): Observable<Blob> {
+    const params = new HttpParams().set('format', format);
+    return this.http.post(`${this.api}/${id}/generer-rapport`, {}, { params, responseType: 'blob' });
   }
 
   initialiser(request: InitProjetRequest): Observable<Projet> {

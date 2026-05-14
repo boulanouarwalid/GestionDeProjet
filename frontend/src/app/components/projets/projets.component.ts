@@ -1,10 +1,10 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ProjetService } from '../../services/projet.service';
 import { DataCacheService } from '../../services/data-cache.service';
-import { Projet, ProjetDTO } from '../../models/models';
+import { Projet, ProjetDTO, BudgetDTO, InitProjetRequest } from '../../models/models';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -64,13 +64,27 @@ import { Subscription } from 'rxjs';
                 <path d="M2 10V3C2 2.4 2.4 2 3 2H10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
               </svg>
             </button>
-            <button class="btn btn-icon btn-ghost" title="Rapport" (click)="genererRapport(p.id)">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M3 2H9L12 5V12C12 12.6 11.6 13 11 13H3C2.4 13 2 12.6 2 12V3C2 2.4 2.4 2 3 2Z" stroke="currentColor" stroke-width="1.3"/>
-                <path d="M9 2V5H12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-                <path d="M5 8H9M5 10H7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-              </svg>
-            </button>
+            <div class="dropdown-wrap">
+              <button class="btn btn-icon btn-ghost" title="Rapport" (click)="toggleReportMenu(p.id); $event.stopPropagation()">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M3 2H9L12 5V12C12 12.6 11.6 13 11 13H3C2.4 13 2 12.6 2 12V3C2 2.4 2.4 2 3 2Z" stroke="currentColor" stroke-width="1.3"/>
+                  <path d="M9 2V5H12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                  <path d="M5 8H9M5 10H7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+              </button>
+              @if (reportMenuProjetId === p.id) {
+                <div class="dropdown-menu">
+                  <button class="dropdown-item" (click)="genererRapport(p.id, 'rapportPDFService'); $event.stopPropagation()">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 1H8L10 3V11C10 11.6 9.6 12 9 12H2C1.4 12 1 11.6 1 11V2C1 1.4 1.4 1 2 1Z" stroke="currentColor" stroke-width="1.2"/><path d="M8 1V3H10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    Rapport PDF
+                  </button>
+                  <button class="dropdown-item" (click)="genererRapport(p.id, 'rapportExcelService'); $event.stopPropagation()">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M3 4L6 6L3 8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Rapport Excel
+                  </button>
+                </div>
+              }
+            </div>
             <button class="btn btn-icon btn-ghost danger-hover" title="Supprimer" (click)="confirmDelete(p)">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M2 4H12M5 4V3H9V4M5.5 6.5V10.5M8.5 6.5V10.5M3 4L3.5 11C3.5 11.6 3.9 12 4.5 12H9.5C10.1 12 10.5 11.6 10.5 11L11 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
@@ -140,11 +154,26 @@ import { Subscription } from 'rxjs';
         <div class="form-group">
           <label>Nom du Projet</label>
           <input type="text" class="form-control" placeholder="Ex: Refonte Infrastructure..."
-                 [(ngModel)]="newProjetName" (keyup.enter)="createProjet()">
+                 [(ngModel)]="formProjet.nomProjet" (keyup.enter)="createProjet()">
+        </div>
+        <div class="form-divider">
+          <span class="divider-text">Budget (optionnel)</span>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex:1">
+            <label>Montant (MAD)</label>
+            <input type="number" class="form-control" placeholder="Ex: 500000"
+                   [(ngModel)]="formBudget.montantPrevu">
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Categorie</label>
+            <input type="text" class="form-control" placeholder="Ex: Infrastructure"
+                   [(ngModel)]="formBudget.categorie">
+          </div>
         </div>
         <div class="modal-actions">
           <button class="btn btn-ghost" (click)="showCreateModal = false">Annuler</button>
-          <button class="btn btn-primary" (click)="createProjet()" [disabled]="!newProjetName.trim()">Creer</button>
+          <button class="btn btn-primary" (click)="createProjet()" [disabled]="!formProjet.nomProjet.trim()">Creer</button>
         </div>
       </div>
     </div>
@@ -226,6 +255,18 @@ import { Subscription } from 'rxjs';
     .confirm-panel p { color:var(--ink-3); font-size:0.88rem; margin-bottom:0; }
     .confirm-panel strong { color:var(--ink-1); }
 
+    /* Dropdown */
+    .dropdown-wrap { position:relative; }
+    .dropdown-menu { position:absolute; top:100%; right:0; z-index:50; min-width:150px; margin-top:4px; padding:6px; background:var(--surface-2); border:1px solid var(--glass-3); border-radius:var(--r-md); box-shadow:var(--shadow-lg); display:flex; flex-direction:column; gap:3px; }
+    .dropdown-item { display:flex; align-items:center; gap:8px; padding:8px 12px; border:none; background:none; color:var(--ink-2); font-size:0.78rem; font-weight:500; font-family:inherit; cursor:pointer; border-radius:var(--r-sm); transition:background var(--dur-fast); width:100%; text-align:left; }
+    .dropdown-item:hover { background:var(--glass-2); color:var(--ink-0); }
+
+    /* Form divider */
+    .form-divider { display:flex; align-items:center; gap:12px; margin:16px 0; }
+    .form-divider::before, .form-divider::after { content:''; flex:1; height:1px; background:var(--glass-3); }
+    .divider-text { font-size:0.68rem; font-weight:700; color:var(--ink-4); text-transform:uppercase; letter-spacing:0.08em; white-space:nowrap; }
+    .form-row { display:flex; gap:14px; }
+
     /* Card color palette */
     :host { --c0: linear-gradient(135deg,#4f8fff,#2563eb); }
   `]
@@ -235,9 +276,11 @@ export class ProjetsComponent implements OnInit, OnDestroy {
   filteredProjets: Projet[] = [];
   searchTerm = '';
   showCreateModal = false;
-  newProjetName = '';
+  formProjet: ProjetDTO = { nomProjet: '' };
+  formBudget: BudgetDTO = { montantPrevu: 0, categorie: '' };
   projetToDelete: Projet | null = null;
   toast: { message: string; type: string } | null = null;
+  reportMenuProjetId: number | null = null;
   private sub!: Subscription;
 
   cardColors = [
@@ -250,6 +293,9 @@ export class ProjetsComponent implements OnInit, OnDestroy {
   ];
 
   constructor(private projetService: ProjetService, private cache: DataCacheService) {}
+
+  @HostListener('document:click')
+  closeReportMenu() { this.reportMenuProjetId = null; }
 
   ngOnInit() {
     // Subscribe to cache — instant if already loaded
@@ -270,17 +316,40 @@ export class ProjetsComponent implements OnInit, OnDestroy {
   }
 
   createProjet() {
-    if (!this.newProjetName?.trim()) return;
-    this.projetService.create({ nomProjet: this.newProjetName.trim() }).subscribe({
-      next: (created: Projet) => {
-        this.showCreateModal = false;
-        this.newProjetName = '';
-        // Optimistically add to cache
-        this.cache.addProjet(created);
-        this.showToast('Projet cree', 'success');
-      },
-      error: () => this.showToast('Erreur de creation', 'error')
-    });
+    if (!this.formProjet.nomProjet?.trim()) return;
+    const hasBudget = this.formBudget.montantPrevu > 0 && this.formBudget.categorie?.trim();
+
+    if (hasBudget) {
+      const req: InitProjetRequest = {
+        projetDTO: { nomProjet: this.formProjet.nomProjet.trim() },
+        budgetDTO: { montantPrevu: this.formBudget.montantPrevu, categorie: this.formBudget.categorie.trim() }
+      };
+      this.projetService.initialiser(req).subscribe({
+        next: (created: Projet) => {
+          this.resetForm();
+          this.cache.addProjet(created);
+          this.cache.refreshProjets();
+          this.cache.signalBudgetRefresh();
+          this.showToast('Projet + Budget crees', 'success');
+        },
+        error: () => this.showToast('Erreur de creation', 'error')
+      });
+    } else {
+      this.projetService.create({ nomProjet: this.formProjet.nomProjet.trim() }).subscribe({
+        next: (created: Projet) => {
+          this.resetForm();
+          this.cache.addProjet(created);
+          this.showToast('Projet cree', 'success');
+        },
+        error: () => this.showToast('Erreur de creation', 'error')
+      });
+    }
+  }
+
+  private resetForm() {
+    this.showCreateModal = false;
+    this.formProjet = { nomProjet: '' };
+    this.formBudget = { montantPrevu: 0, categorie: '' };
   }
 
   cloneProjet(id: number) {
@@ -290,9 +359,24 @@ export class ProjetsComponent implements OnInit, OnDestroy {
     });
   }
 
-  genererRapport(id: number) {
-    this.projetService.genererRapport(id).subscribe({
-      next: (msg) => this.showToast(msg || 'Rapport genere', 'success'),
+  toggleReportMenu(id: number) {
+    this.reportMenuProjetId = this.reportMenuProjetId === id ? null : id;
+  }
+
+  genererRapport(id: number, format: string) {
+    this.reportMenuProjetId = null;
+    this.projetService.genererRapport(id, format).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'rapport_' + id + '_' + format + '.' + (format.includes('PDF') ? 'txt' : 'csv');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        this.showToast('Rapport telecharge', 'success');
+      },
       error: () => this.showToast('Erreur de rapport', 'error')
     });
   }

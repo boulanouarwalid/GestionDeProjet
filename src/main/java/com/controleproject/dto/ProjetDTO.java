@@ -11,6 +11,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ProjetDTO {
     @NotBlank(message = "Le nom du projet est obligatoire")
-    @Size(min=3, message = "Le nom doit avoir au moins 3 caractères")
+    @Size(min=1, message = "Le nom doit avoir au moins 1 caractère")
     private String nomProjet;
 }

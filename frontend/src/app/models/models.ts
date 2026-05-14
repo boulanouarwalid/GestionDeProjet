@@ -56,5 +56,4 @@ export interface DepenseDTO {
 export interface InitProjetRequest {
   projetDTO: ProjetDTO;
   budgetDTO: BudgetDTO;
-  tachesAvecDepenses: { [key: string]: DepenseDTO };
 }
