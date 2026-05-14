@@ -3,10 +3,8 @@ package com.controleproject.service;
 import java.util.List;
 import java.util.Map;
 
-import com.controleproject.event.DepenseCreatedEvent;
 import com.controleproject.observer.Observer;
 import org.springframework.beans.factory.annotation.*;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,32 +26,10 @@ public class TacheService implements Observer {
         return tacheRepository.findAll();
     }
 
-    // event de obserrevver 
-    @EventListener
-    public void onDepenseCreated(DepenseCreatedEvent event) {
-        Tache t = tacheRepository.findById(event.getTacheId()).orElseThrow();
-        Long projetId = t.getProjet().getId();
-        List<Budget> budgets = budgetRepository.findByProjetId(projetId);
-        
-        if (budgets == null || budgets.isEmpty()) {
-            System.err.println("Aucun budget trouvé pour le projet ID: " + projetId + ". Impossible d'ajouter la dépense au budget.");
-            return;
-        }
-
-        Budget b = budgets.get(0); // On prend le premier budget du projet
-        
-        Double consommeActuel = b.getMontantConsomme() != null ? b.getMontantConsomme() : 0.0;
-        b.setMontantConsomme(consommeActuel + event.getMontant());
-        budgetRepository.save(b);
-
-        System.out.println(" Budget du projet mis à jour via Observer !");
-    }
-
     public Tache createTache(TacheDTO dto, Long projetId) {
         Projet p = projetRepository.findById(projetId)
                 .orElseThrow(() -> new RuntimeException("Projet introuvable"));
 
-        // Factory pattern: choisir la factory selon le type/catégorie de tâche.
         String type = dto.getType() != null && !dto.getType().isBlank() ? dto.getType() : dto.getType();
         if (type == null || type.isBlank()) {
             throw new RuntimeException("Le type de tâche est obligatoire");

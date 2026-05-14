@@ -29,11 +29,9 @@ public class ProjetService {
 	    public void delete(Long id){
 	    	projetRepository.deleteById(id);
 	    }
-		// tempolate method pattern
 		public void GenererRapport (Long id){
 			rapportExcelService.genererRapportComplet(id);
 		}
-		// cloner un projet
 		public Projet clonerProjet(Long id) {
 			Projet original = projetRepository.findById(id).orElseThrow(() -> new RuntimeException("Projet introuvable"));
 			Projet clone = new Projet();

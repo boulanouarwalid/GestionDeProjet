@@ -26,9 +26,9 @@ public class Projet implements Cloneable{
     public Projet clone() {
         try {
             Projet copie = (Projet) super.clone();
-            copie.setId(null);            // nouveau ID en base
-            copie.setTaches(null);         // à réassigner
-            copie.setBudgets(null);         // à réassigner
+            copie.setId(null);
+            copie.setTaches(null);
+            copie.setBudgets(null);
             return copie;
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);

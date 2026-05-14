@@ -244,7 +244,7 @@ export class BudgetsComponent implements OnInit, OnDestroy {
   form: BudgetDTO = { montantPrevu: 0, categorie: '' };
   budgetToDelete: Budget | null = null;
   toast: { message: string; type: string } | null = null;
-  private sub!: Subscription;
+  private subs: Subscription[] = [];
 
   cardColors = [
     'linear-gradient(90deg,#4f8fff,#2563eb)',
@@ -257,19 +257,22 @@ export class BudgetsComponent implements OnInit, OnDestroy {
   constructor(private budgetService: BudgetService, private projetService: ProjetService, private cache: DataCacheService) {}
 
   ngOnInit() {
-    // Subscribe to projects from cache — auto-select first project when list arrives
-    this.sub = this.cache.projets$.subscribe(projets => {
+    // Subscribe to projects from cache
+    this.subs.push(this.cache.projets$.subscribe(projets => {
       this.projets = projets;
-      // Auto-select first project if none selected yet
       if (projets.length > 0 && this.selectedProjetId === 0) {
         this.selectedProjetId = projets[0].id;
         this.loadBudgets();
       }
-    });
+    }));
+    // Auto-refresh when budget data changes (e.g. depense created/deleted)
+    this.subs.push(this.cache.budgetRefresh$.subscribe(() => {
+      this.loadBudgets();
+    }));
     this.cache.init();
   }
 
-  ngOnDestroy() { if (this.sub) this.sub.unsubscribe(); }
+  ngOnDestroy() { this.subs.forEach(s => s.unsubscribe()); }
 
   loadBudgets() {
     if (this.selectedProjetId <= 0) { this.budgets = []; return; }

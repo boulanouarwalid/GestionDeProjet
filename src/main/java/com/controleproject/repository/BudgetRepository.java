@@ -11,7 +11,6 @@ import com.controleproject.entity.Budget;
 public interface BudgetRepository extends JpaRepository<Budget, Long> {
     List<Budget> findByProjetId(Long projetId);
     
-    // Trouver les budgets par catégorie
     List<Budget> findByCategorie(String categorie);
 }
 

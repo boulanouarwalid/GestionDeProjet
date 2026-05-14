@@ -9,9 +9,8 @@ import jakarta.annotation.PostConstruct;
 public class ObserverConfig {
 
     private final IDepenseService depenseService;
-    private final Observer tacheService; // TacheService implements Observer
+    private final Observer tacheService;
 
-    // Spring resolves both beans automatically through IoC container injection
     public ObserverConfig(IDepenseService depenseService, Observer tacheService) {
         this.depenseService = depenseService;
         this.tacheService = tacheService;
@@ -19,7 +18,6 @@ public class ObserverConfig {
 
     @PostConstruct
     public void initObserverPipeline() {
-        // Registers TacheService into the proxy-wrapped target pipeline directly
         depenseService.addObserver(tacheService);
         System.out.println(" Connected Classic Observer Pattern to IDepenseService proxy.");
     }

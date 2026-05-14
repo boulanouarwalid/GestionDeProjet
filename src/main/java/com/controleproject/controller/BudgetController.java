@@ -23,47 +23,25 @@ public class BudgetController {
     private IBudgetService budgetService;
 
     @PostMapping("/{projetId}")
-    @Operation(summary = "Create a new budget", description = "Creates a new budget for a specific project")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Budget created successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid input"),
-        @ApiResponse(responseCode = "404", description = "Project not found")
-    })
     public ResponseEntity<Budget> createBudget(
             @PathVariable Long projetId, 
-            @Valid @RequestBody BudgetDTO dto) { // @Valid déclenche la validation
+            @Valid @RequestBody BudgetDTO dto) {
         
         return ResponseEntity.ok(budgetService.createBudget(dto, projetId));
     }
     @PutMapping("/{projetId}/{budgetId}")
-    @Operation(summary = "Update an existing budget", description = "Modifies an existing budget for a project")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Budget updated successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid input"),
-        @ApiResponse(responseCode = "404", description = "Budget or project not found")
-    })
     public ResponseEntity<Budget> modifyBudget(
             @PathVariable Long projetId, @PathVariable Long budgetId, 
-            @Valid @RequestBody BudgetDTO dto) { // @Valid déclenche la validation
+            @Valid @RequestBody BudgetDTO dto) {
         
         return ResponseEntity.ok(budgetService.modifyBudget(dto, budgetId,projetId));
     } 
     @GetMapping("/{projetId}")
-    @Operation(summary = "Get budgets by project", description = "Retrieves all budgets associated with a specific project")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Budgets retrieved successfully"),
-        @ApiResponse(responseCode = "404", description = "Project not found")
-    })
     public List<Budget> getBudgetsByProjet(@PathVariable Long projetId){
     	return budgetService.getBudgetsByProjet(projetId);
     }
     
     @DeleteMapping("/{BudgetId}")
-    @Operation(summary = "Delete a budget", description = "Deletes a budget by its ID")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Budget deleted successfully"),
-        @ApiResponse(responseCode = "404", description = "Budget not found")
-    })
     public void deleteBudget(@PathVariable Long BudgetId) {
     	budgetService.deleteBudget(BudgetId);
     }

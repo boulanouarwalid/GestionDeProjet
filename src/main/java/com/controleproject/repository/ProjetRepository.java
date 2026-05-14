@@ -8,7 +8,6 @@ import com.controleproject.entity.Projet;
 
 @Repository
 public interface ProjetRepository extends JpaRepository<Projet, Long> {
-    // Méthodes CRUD automatiques incluses
 	List<Projet> findByNomProjetContaining(String nom);
 }
 

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
 import { tap, shareReplay } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { Projet, Tache, Depense, Budget } from '../models/models';
@@ -26,6 +26,12 @@ export class DataCacheService {
   readonly taches$   = this._taches$.asObservable();
   readonly depenses$ = this._depenses$.asObservable();
   readonly loading$  = this._loading$.asObservable();
+
+  /* Budget refresh trigger — any component can emit to signal budgets need reloading */
+  private _budgetRefresh$ = new Subject<void>();
+  readonly budgetRefresh$ = this._budgetRefresh$.asObservable();
+
+  signalBudgetRefresh(): void { this._budgetRefresh$.next(); }
 
   /* Track whether initial load has happened */
   private loaded = false;
@@ -74,7 +80,12 @@ export class DataCacheService {
     this.http.get<Depense[]>(this.apiDepenses).subscribe(d => this._depenses$.next(d));
   }
 
-  /** Snapshot getters for components that need the current value synchronously */
+  get depensesSnapshot(): Depense[] { return this._depenses$.getValue(); }
+
+  get tachesSnapshot():  Tache[]   { return this._taches$.getValue(); }
+
+  get projetsSnapshot(): Projet[]  { return this._projets$.getValue(); }
+
   /** Add a single task to the cache (optimistic UI update) */
   addTache(tache: Tache): void {
     const current = this._taches$.getValue();
@@ -93,12 +104,7 @@ export class DataCacheService {
     this._depenses$.next([...current, depense]);
   }
 
-
-  get tachesSnapshot():  Tache[]   { return this._taches$.getValue(); }
-  /** Add a single budget to the cache (optimistic UI update) */
   addBudget(budget: Budget): void {
-    const current = this._depenses$.getValue(); // wrong stream, need a budgets stream? Actually DataCacheService currently has no budgets stream. We need to add a BehaviorSubject for budgets.
-    // Since there is no budgets stream, we will create one above.
-    // Placeholder will be replaced later.
+    // Budget cache not implemented yet — place for future _budgets$ subject
   }
 }

@@ -47,7 +47,6 @@ public class ProjetController {
     }
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) { projetService.delete(id); }
-    // cloner un projet
     @PostMapping("/{id}/cloner")
     public ResponseEntity<Projet> cloner(@PathVariable Long id) {
         Projet clone = projetService.clonerProjet(id);

@@ -307,18 +307,18 @@ export class DepensesComponent implements OnInit, OnDestroy {
 
   save() {
     if (this.editing) {
-      this.depenseService.update(this.editing.id, this.form).subscribe({ next: () => { this.closeModal(); this.cache.refreshDepenses(); this.showToast('Depense modifiee', 'success'); }, error: e => this.handleError(e) });
+      this.depenseService.update(this.editing.id, this.form).subscribe({ next: () => { this.closeModal(); this.cache.refreshDepenses(); this.cache.signalBudgetRefresh(); this.showToast('Depense modifiee', 'success'); }, error: e => this.handleError(e) });
     } else {
       const tid = this.modalTacheId || this.selectedTacheId;
       if (!tid) { this.showToast('Choisissez une tache', 'error'); return; }
-      this.depenseService.create(tid, this.form).subscribe({ next: () => { this.closeModal(); this.cache.refreshDepenses(); this.showToast('Depense creee', 'success'); }, error: e => this.handleError(e) });
+      this.depenseService.create(tid, this.form).subscribe({ next: () => { this.closeModal(); this.cache.refreshDepenses(); this.cache.signalBudgetRefresh(); this.showToast('Depense creee', 'success'); }, error: e => this.handleError(e) });
     }
   }
 
   confirmDelete(d: Depense) { this.depenseToDelete = d; }
   deleteDepense() {
     if (!this.depenseToDelete) return;
-    this.depenseService.delete(this.depenseToDelete.id).subscribe({ next: () => { this.depenseToDelete = null; this.cache.refreshDepenses(); this.showToast('Depense supprimee', 'success'); }, error: e => this.handleError(e) });
+    this.depenseService.delete(this.depenseToDelete.id).subscribe({ next: () => { this.depenseToDelete = null; this.cache.refreshDepenses(); this.cache.signalBudgetRefresh(); this.showToast('Depense supprimee', 'success'); }, error: e => this.handleError(e) });
   }
 
   handleError(e: any) {

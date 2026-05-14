@@ -11,6 +11,5 @@ import com.controleproject.entity.Depense;
 public interface DepenseRepository extends JpaRepository<Depense, Long> {
 	 List<Depense> findByTacheId(Long tacheId);
 	    
-	    // Trouver les dépenses par date (utile pour les rapports mensuels)
 	 List<Depense> findByDateDepenseBetween(java.util.Date debut, java.util.Date fin);
 }

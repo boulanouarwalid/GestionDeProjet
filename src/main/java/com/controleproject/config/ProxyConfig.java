@@ -11,9 +11,8 @@ import org.springframework.context.annotation.Primary;
 public class ProxyConfig {
 
     @Bean
-    @Primary // Makes this proxy the default choice for @Autowired
+    @Primary
     public IDepenseService depenseService(@Qualifier("depenseServiceTarget") IDepenseService targetService) {
-        // Wraps the native service implementation with your transaction proxy logic
         return TransactionProxy.create(targetService);
     }
 }

@@ -6,7 +6,7 @@ import com.controleproject.dto.ProjetDTO;
 import com.controleproject.dto.TacheDTO;
 import com.controleproject.entity.Projet;
 import com.controleproject.entity.Tache;
-import com.controleproject.service.BudgetService;
+import com.controleproject.service.IBudgetService;
 import com.controleproject.service.DepenseService;
 import com.controleproject.service.ProjetService;
 import com.controleproject.service.TacheService;
@@ -19,13 +19,12 @@ import java.util.Map;
 @Service
 public class ProjetFacade {
     @Autowired private ProjetService projetService;
-    @Autowired private BudgetService budgetService;
+    @Autowired private IBudgetService budgetService;
     @Autowired private TacheService tacheService;
     @Autowired private DepenseService depenseService;
 
     @Transactional
     public Projet initialiserProjet(ProjetDTO projetDTO, Map<TacheDTO, DepenseDTO> tachesAvecDepenses, BudgetDTO budgetDTO) {
-        // Facade pattern : orchestration des services métier au lieu d'accès direct aux repositories.
         Projet p = projetService.save(projetDTO);
         budgetService.createBudget(budgetDTO, p.getId());
 

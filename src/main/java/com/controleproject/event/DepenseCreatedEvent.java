@@ -2,12 +2,10 @@ package com.controleproject.event;
 
 import lombok.Getter;
 
+@Deprecated
 public class DepenseCreatedEvent {
-    // Getters
-    @Getter
-    private final double montant;
-    @Getter
-    private final Long tacheId;
+    @Getter private final double montant;
+    @Getter private final Long tacheId;
 
     public DepenseCreatedEvent(double montant, Long tacheId) {
         this.montant = montant;

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-@Primary // Tells Spring to choose this decorated service over the base one
+@Primary
 public class BudgetAlerteDecorator implements IBudgetService {
 
     @Autowired
@@ -20,9 +20,8 @@ public class BudgetAlerteDecorator implements IBudgetService {
     public Budget createBudget(BudgetDTO dto, Long projetId) {
         Budget b = originalService.createBudget(dto, projetId);
 
-        // Decorator logic additions
         if (b.getMontantPrevu() > 500000) {
-            System.out.println("⚠️ ALERTE DECORATOR : Un budget très important vient d'être créé !");
+            System.out.println(" ALERTE DECORATOR : Un budget très important vient d'être créé !");
         }
         return b;
     }
@@ -36,9 +35,8 @@ public class BudgetAlerteDecorator implements IBudgetService {
     public Budget modifyBudget(BudgetDTO dto, Long budgetId, Long projetId) {
         Budget b = originalService.modifyBudget(dto, budgetId, projetId);
 
-        // You can decorate the modification workflow too
         if (b.getMontantPrevu() > 500000) {
-            System.out.println("⚠️ ALERTE DECORATOR : Un budget a été modifié vers un montant critique !");
+            System.out.println(" ALERTE DECORATOR : Un budget a été modifié vers un montant critique !");
         }
         return b;
     }
